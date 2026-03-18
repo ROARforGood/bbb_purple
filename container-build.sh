@@ -35,46 +35,6 @@ log_info "============================================"
 log_info "Starting Nerves ROAR build inside container"
 log_info "============================================"
 
-# Update and install dependencies
-log_info "Installing system dependencies..."
-apt update
-check_result "apt update"
-
-apt install -y \
-    build-essential \
-    automake \
-    autoconf \
-    git \
-    squashfs-tools \
-    pkg-config \
-    curl \
-    wget \
-    unzip \
-    rsync \
-    file \
-    python3 \
-    bc \
-    cpio \
-    libssl-dev \
-    libncurses5-dev \
-    libconfuse-dev \
-    libarchive-dev \
-    libsodium-dev \
-    help2man \
-    libtool \
-    locales
-check_result "Install system dependencies"
-
-# Configure locale
-log_info "Configuring locale..."
-locale-gen en_US.UTF-8
-check_result "Generate locale"
-
-export LANG=en_US.UTF-8
-export LC_ALL=en_US.UTF-8
-echo 'export LANG=en_US.UTF-8' >> ~/.bashrc
-echo 'export LC_ALL=en_US.UTF-8' >> ~/.bashrc
-
 # Install asdf
 log_info "Installing asdf version manager..."
 if [ ! -d "$HOME/.asdf" ]; then
@@ -147,19 +107,24 @@ if ! command -v fwup &> /dev/null; then
     make
     check_result "fwup make"
 
-    make install
+    sudo make install
     check_result "fwup install"
 else
     log_warn "fwup already installed, skipping..."
 fi
 
+
 # Verify fwup installation
 fwup --version
 check_result "fwup verification"
 
+
 # Build the Nerves project
 log_info "Building Nerves ROAR project..."
 cd /home/roar
+
+log_info "Remove old images .. "
+rm -rf _build deps .nerves
 
 mix local.hex --force
 check_result "Install hex"

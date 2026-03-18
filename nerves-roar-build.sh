@@ -10,7 +10,8 @@ NC='\033[0m'
 
 # Script configuration
 CONTAINER_NAME="nerves-roar-build"
-IMAGE="ubuntu:22.04"
+# IMAGE="ubuntu:22.04"
+IMAGE="${CONTAINER_NAME}"
 CONTAINER_WORKDIR="/home/roar"
 BUILD_SCRIPT_NAME="container-build.sh"
 
@@ -35,7 +36,7 @@ usage() {
     echo "                    The ${BUILD_SCRIPT_NAME} must be present in this directory"
     echo ""
     echo "Example:"
-    echo "  $0 /home/kon/Projects/Yalantis/ROAR/bbb_purple"
+    echo "  $0 ~/Projects/bbb_purple"
     echo "  $0                # uses current directory"
     echo ""
     echo "Setup:"
@@ -86,14 +87,20 @@ log_info "Build script: ${BUILD_SCRIPT_NAME}"
 log_info "============================================"
 
 # Run podman container, execute build script, and exit
-log_info "Starting container and running build..."
+log_info "Building  container ... "
+podman build --build-arg HOST_USER="$(whoami)" -t "${CONTAINER_NAME}" .
 
+log_info "Running  container ... "
 podman run -it \
     --name "${CONTAINER_NAME}" \
     -v "${HOST_DIR}:${CONTAINER_WORKDIR}:Z" \
     -w "${CONTAINER_WORKDIR}" \
+    --userns=keep-id \
     "${IMAGE}" \
     bash -c "chmod +x ${BUILD_SCRIPT_NAME} && ./${BUILD_SCRIPT_NAME}"
+
+podman exec -it "${CONTAINER_NAME}" \
+bash -c "chmod +x ${BUILD_SCRIPT_NAME} && ./${BUILD_SCRIPT_NAME}"
 
 BUILD_EXIT_CODE=$?
 
